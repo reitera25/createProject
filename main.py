@@ -9,6 +9,10 @@ def time_convert(sec):
     min = sec // 60
     return sec, min
 
+
+def time_convert(sec):
+    min = sec // 60
+    return sec, min
 class Game:
     enemies = []
     rockets = []
