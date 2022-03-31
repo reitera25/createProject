@@ -1,5 +1,6 @@
 import pygame, sys, math, random, time
-
+    
+start_time = time.time()
 screen = pygame.display.set_mode((800, 800))
 playerImg = pygame.image.load("char1.png")
 player_y = 0
@@ -9,10 +10,6 @@ def time_convert(sec):
     min = sec // 60
     return sec, min
 
-
-def time_convert(sec):
-    min = sec // 60
-    return sec, min
 class Game:
     enemies = []
     rockets = []
@@ -40,7 +37,7 @@ class Game:
 
             seconds, minutes = time_convert(time_lapsed)
 
-            self.difficulty = minutes
+            self.difficulty = minutes + 1
 
 
             # make it so cooldown only updates every 30 seconds
@@ -253,4 +250,3 @@ class Generator:
 
 if __name__ == '__main__':
     game = Game(800, 800)
-    start_time = time.time()
