@@ -8,6 +8,7 @@ player_x = 0
 
 def time_convert(sec):
     min = sec // 60
+    sec = math.floor(sec)
     return sec, min
 
 class Game:
@@ -22,11 +23,16 @@ class Game:
         self.clock = pygame.time.Clock()
         done = False
         self.cool_down_count = 0
+        self.spawn_cooldown_count = 0
+
+        global player
 
         player = Player(self, width/2, height/2)
         #generator = Generator(self)
         rocket = None
         angle = 0
+
+        self.s_cooldown = 420
 
 
         while not done:         
@@ -35,18 +41,21 @@ class Game:
 
             time_lapsed = curr_time - start_time
 
+        
+
             seconds, minutes = time_convert(time_lapsed)
+
+            self.displayText(str(seconds))
 
             self.difficulty = minutes + 1
 
 
-            # make it so cooldown only updates every 30 seconds
-            self.spawn_cooldown = 420 / self.difficulty
+            # only updates every 30 seconds
+            if int(seconds) % 30 == 0:
+                self.s_cooldown = 420 / ((seconds // 30) + 1)
+                print("pong")
 
-            
-
-            #if len(self.enemies) == 0:
-             #   self.displayText("Wave Clear")
+            self.spawn_cooldown(self.s_cooldown)
 
             pressed = pygame.key.get_pressed()
             left, middle, right = pygame.mouse.get_pressed()
@@ -84,12 +93,8 @@ class Game:
             self.clock.tick(60)
             screen.fill((0, 0, 0))
 
-            for enemy in self.enemies:
-                enemy.draw()
-                enemy.checkCollision(self)
-                if (enemy.y > height):
-                    self.lost = True
-                    self.displayText("YOU DIED")
+            #for enemy in self.enemies:
+            #    Enemy.checkCollision(self)
 
             for rocket in self.rockets:
                 rocket[0] += rocket[2]
@@ -110,7 +115,7 @@ class Game:
     def displayText(self, text):
         pygame.font.init()
         font = pygame.font.SysFont('Arial', 50)
-        textsurface = font.render(text, False, (44, 0, 62))
+        textsurface = font.render(text, False, (255, 255, 255))
         screen.blit(textsurface, (110, 160))
 
     def cooldown(self):
@@ -122,20 +127,27 @@ class Game:
     def spawn_cooldown(self, cooldown):
         if self.spawn_cooldown_count >= cooldown:
             self.spawn_cooldown_count = 0
-        elif self.spawn_cooldown_count > 0:
+            for i in range(4):
+                n = Enemy(player)
+                self.enemies.append(n)
+                print
+
+        elif self.spawn_cooldown_count >= 0:
             self.spawn_cooldown_count += 1
+
 
 
 class Enemy:
     def __init__(self, player):
-        self.image = pygame.Surface((40, 40).convert_alpha())
+        self.image = pygame.Surface((30, 30))
         self.player = player
-        self.image.fill(148, 54, 224)
+        self.image.fill((148, 54, 224))
         self.orig_img = self.image
         self.rect = self.image.get_rect()
         self.spawn()
 
     def spawn(self):
+        print("eeeee")
         self.direction = random.randrange(4)
         if self.direction == 0:
             self.rect.x = random.randrange(800 - self.rect.width)
@@ -161,7 +173,7 @@ class Enemy:
     def update(self):
         self.rect.x += self.speed_x
         self.rect.y += self.speed_y    
-        dir_x, dir_y = self.player.rect.x - self.rect.x, self.player.rect.y - self.rect.y
+        dir_x, dir_y = player.x - self.rect.x, player.y - self.rect.y
         self.rot = (180 / math.pi) * math.atan2(-dir_x, -dir_y)
         self.image = pygame.transform.rotate(self.orig_img, self.rot)
 
