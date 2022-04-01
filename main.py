@@ -6,6 +6,8 @@ playerImg = pygame.image.load("char1.png")
 player_y = 0
 player_x = 0
 
+all_enemies = pygame.sprite.Group()
+
 def time_convert(sec):
     min = sec // 60
     sec = math.floor(sec)
@@ -50,10 +52,8 @@ class Game:
             self.difficulty = minutes + 1
 
 
-            # only updates every 30 seconds
             if int(seconds) % 30 == 0:
                 self.s_cooldown = 420 / ((seconds // 30) + 1)
-                print("pong")
 
             self.spawn_cooldown(self.s_cooldown)
 
@@ -79,8 +79,8 @@ class Game:
 
                     angle = math.atan2(distance_y, distance_x)
 
-                    speed_x = 2 * math.cos(angle)
-                    speed_y = 2 * math.sin(angle)
+                    speed_x = 4 * math.cos(angle)
+                    speed_y = 4 * math.sin(angle)
 
                     self.rockets.append([player.x, player.y, speed_x, speed_y])
                     self.cool_down_count = 1
@@ -88,13 +88,17 @@ class Game:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     done = True
-
+            
             pygame.display.flip()
             self.clock.tick(60)
             screen.fill((0, 0, 0))
 
-            #for enemy in self.enemies:
-            #    Enemy.checkCollision(self)
+            all_enemies.update()
+
+            all_enemies.draw(screen)
+
+            for enemy in all_enemies:
+                Enemy.checkCollision(enemy)
 
             for rocket in self.rockets:
                 rocket[0] += rocket[2]
@@ -128,46 +132,47 @@ class Game:
         if self.spawn_cooldown_count >= cooldown:
             self.spawn_cooldown_count = 0
             for i in range(4):
-                n = Enemy(player)
-                self.enemies.append(n)
-                print
+                n = Enemy(player, self.difficulty)
+                all_enemies.add(n)
+                Enemy.add(n)
 
         elif self.spawn_cooldown_count >= 0:
             self.spawn_cooldown_count += 1
 
 
 
-class Enemy:
-    def __init__(self, player):
-        self.image = pygame.Surface((30, 30))
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self, player, health):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface((30, 30)).convert_alpha()
         self.player = player
         self.image.fill((148, 54, 224))
         self.orig_img = self.image
         self.rect = self.image.get_rect()
         self.spawn()
+        self.health = health
 
     def spawn(self):
-        print("eeeee")
         self.direction = random.randrange(4)
         if self.direction == 0:
             self.rect.x = random.randrange(800 - self.rect.width)
             self.rect.y = random.randrange(-100, -40)
             self.speed_x = 0
-            self.speed_y = random.randrange(1, 8)
+            self.speed_y = random.randrange(1, 6)
         if self.direction == 1:
             self.rect.x = random.randrange(800 - self.rect.width)
             self.rect.y = random.randrange(800, 800 + 60)
             self.speed_x = 0
-            self.speed_y = random.randrange(1, 8)
+            self.speed_y = random.randrange(1, 6)
         if self.direction == 2:
             self.rect.x = random.randrange(-100, -40)
             self.rect.y = random.randrange(800 - self.rect.height)
-            self.speed_x = random.randrange(1, 8)
+            self.speed_x = random.randrange(1, 6)
             self.speed_y = 0
         if self.direction == 3:
             self.rect.x = random.randrange(800, 800+60)
             self.rect.y = random.randrange(800 - self.rect.height)
-            self.speed_x = random.randrange(1, 8)
+            self.speed_x = random.randrange(1, 6)
             self.speed_y = 0
 
     def update(self):
@@ -190,14 +195,17 @@ class Enemy:
             if self.rect.right < -10:
                 self.spawn()
 
-    def checkCollision(self, game):
-        for rocket in game.rockets:
-            if (rocket.x < self.x + self.size and
-                    rocket.x > self.x - self.size and
-                    rocket.y < self.y + self.size and
-                    rocket.y > self.y - self.size):
-                game.rockets.remove(rocket)
-                game.enemies.remove(self)
+    def checkCollision(self):
+        for rocket in Game.rockets:
+            if (rocket[0] < self.rect.x + 30 and
+                    rocket[0] > self.rect.x - 30 and
+                    rocket[1] < self.rect.y + 30 and
+                    rocket[1] > self.rect.y - 30):
+                self.health -= 1
+                if self.health <= 0:
+                    all_enemies.remove(self)
+
+                Game.rockets.remove(rocket)
 
 
 class Player:
