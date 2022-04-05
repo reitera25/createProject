@@ -15,6 +15,8 @@ playerUpgrades = {
     "slow": 0,
 }
 
+upgrade_list = ["fireRate", "velocity", "damage", "regen", "movement", "slow"]
+
 RUNNING, PAUSE, UPGRADE = 0, 1, 2
 
 state = RUNNING
@@ -42,7 +44,8 @@ class Game:
         self.spawn_cooldown_count = 0
         self.health = 10
 
-        pause_text = pygame.font.SysFont("Arial", 75).render("Pause", True, pygame.color.Color("White"))
+        pygame.time.set_timer(self.upgrade(), 60000)
+
         fireRate_text = pygame.font.SysFont("Arial", 20).render("Fire Rate: " + str(playerUpgrades["fireRate"]), True, pygame.color.Color("White"))
         velocity_text = pygame.font.SysFont("Arial", 20).render("Velocity: " + str(playerUpgrades["velocity"]), True, pygame.color.Color("White"))
         damage_text = pygame.font.SysFont("Arial", 20).render("Damage: " + str(playerUpgrades["damage"]), True, pygame.color.Color("White"))
@@ -122,14 +125,13 @@ class Game:
                 state = RUNNING
 
             if state == PAUSE:
-                screen.blit(pause_text, (325, 400))
                 screen.blit(fireRate_text, (600, 50))
                 screen.blit(velocity_text, (600, 80))
                 screen.blit(damage_text, (600, 110))
                 screen.blit(movement_text, (600, 140))
                 screen.blit(regen_text, (600, 170))
                 screen.blit(slow_text, (600, 20))
-
+                
             pygame.display.flip()
             self.clock.tick(60)
             screen.fill((0, 0, 0))
@@ -180,6 +182,10 @@ class Game:
             elif self.cool_down_count > 0:
                 self.cool_down_count += 1
 
+    def upgrade(self):
+        option1 = upgrade_list[random.randrange(6)]
+        option2 = upgrade_list[random.randrange(6)]
+        option3 = upgrade_list[random.randrange(6)]
 
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, player, health):
