@@ -6,7 +6,16 @@ playerImg = pygame.image.load("char1.png")
 player_y = 0
 player_x = 0
 
-RUNNING, PAUSE = 0, 1
+playerUpgrades = {
+    "fireRate": 0,
+    "velocity": 0,
+    "damage": 0,
+    "regen": 0,
+    "movement": 0,
+    "slow": 0,
+}
+
+RUNNING, PAUSE, UPGRADE = 0, 1, 2
 
 state = RUNNING
 
@@ -31,8 +40,15 @@ class Game:
         done = False
         self.cool_down_count = 0
         self.spawn_cooldown_count = 0
+        self.health = 10
 
         pause_text = pygame.font.SysFont("Arial", 75).render("Pause", True, pygame.color.Color("White"))
+        fireRate_text = pygame.font.SysFont("Arial", 20).render("Fire Rate: " + str(playerUpgrades["fireRate"]), True, pygame.color.Color("White"))
+        velocity_text = pygame.font.SysFont("Arial", 20).render("Velocity: " + str(playerUpgrades["velocity"]), True, pygame.color.Color("White"))
+        damage_text = pygame.font.SysFont("Arial", 20).render("Damage: " + str(playerUpgrades["damage"]), True, pygame.color.Color("White"))
+        movement_text = pygame.font.SysFont("Arial", 20).render("Movement Speed: " + str(playerUpgrades["movement"]), True, pygame.color.Color("White"))
+        regen_text = pygame.font.SysFont("Arial", 20).render("Base Regeneration: " + str(playerUpgrades["regen"]), True, pygame.color.Color("White"))
+        slow_text = pygame.font.SysFont("Arial", 20).render("Enemy Slow: " + str(playerUpgrades["slow"]), True, pygame.color.Color("White"))
 
 
         global player
@@ -62,6 +78,8 @@ class Game:
 
             if int(seconds) % 30 == 0:
                 self.s_cooldown = 420 / ((seconds // 30) + 1)
+            
+
 
             self.cooldown(self.s_cooldown, 1)
 
@@ -78,7 +96,7 @@ class Game:
                 player.x += 2 if player.x < width - 20 else 0
             
             if left:
-                self.cooldown(10, 0)
+                self.cooldown(15 - (1.5 * playerUpgrades["fireRate"]), 0)
                 if self.cool_down_count == 0:
                     mouse_x, mouse_y = pygame.mouse.get_pos()
 
@@ -104,7 +122,13 @@ class Game:
                 state = RUNNING
 
             if state == PAUSE:
-                screen.blit(pause_text, (400, 400))
+                screen.blit(pause_text, (325, 400))
+                screen.blit(fireRate_text, (600, 50))
+                screen.blit(velocity_text, (600, 80))
+                screen.blit(damage_text, (600, 110))
+                screen.blit(movement_text, (600, 140))
+                screen.blit(regen_text, (600, 170))
+                screen.blit(slow_text, (600, 20))
 
             pygame.display.flip()
             self.clock.tick(60)
@@ -151,7 +175,7 @@ class Game:
             elif self.spawn_cooldown_count >= 0:
                 self.spawn_cooldown_count += 1
         elif type == 0:
-            if self.cool_down_count >= 10:
+            if self.cool_down_count >= cooldown:
                 self.cool_down_count = 0
             elif self.cool_down_count > 0:
                 self.cool_down_count += 1
