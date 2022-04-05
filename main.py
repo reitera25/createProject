@@ -44,7 +44,14 @@ class Game:
         self.spawn_cooldown_count = 0
         self.health = 10
 
-        pygame.time.set_timer(self.upgrade(), 60000)
+        pygame.time.set_timer(2, 60000)
+
+        self.fir_upgrade_text = pygame.font.SysFont("Arial", 20).render("Decreases weapon cooldown by 10%", True, pygame.color.Color("White"))
+        self.vel_upgrade_text = pygame.font.SysFont("Arial", 20).render("Increases rocket velocity by 10%", True, pygame.color.Color("White"))
+        self.dam_upgrade_text = pygame.font.SysFont("Arial", 20).render("Increases damage by 1", True, pygame.color.Color("White"))
+        self.mov_upgrade_text = pygame.font.SysFont("Arial", 20).render("Increases movement speed by 10%", True, pygame.color.Color("White"))
+        self.reg_upgrade_text = pygame.font.SysFont("Arial", 20).render("Health increases by +1 every minute", True, pygame.color.Color("White"))
+        self.slo_upgrade_text = pygame.font.SysFont("Arial", 20).render("Decreases enemy speed by 10%", True, pygame.color.Color("White"))
 
         fireRate_text = pygame.font.SysFont("Arial", 20).render("Fire Rate: " + str(playerUpgrades["fireRate"]), True, pygame.color.Color("White"))
         velocity_text = pygame.font.SysFont("Arial", 20).render("Velocity: " + str(playerUpgrades["velocity"]), True, pygame.color.Color("White"))
@@ -118,6 +125,8 @@ class Game:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     done = True
+                if event.type == UPGRADE:
+                    self.upgrade()
 
             if pressed[pygame.K_ESCAPE]:
                 state = PAUSE
@@ -183,9 +192,58 @@ class Game:
                 self.cool_down_count += 1
 
     def upgrade(self):
+        upgrading = True
         option1 = upgrade_list[random.randrange(6)]
         option2 = upgrade_list[random.randrange(6)]
         option3 = upgrade_list[random.randrange(6)]
+
+        if option1 == "fireRate":
+            txt1 = self.fir_upgrade_text
+        elif option1 == "velocity":
+            txt1 = self.vel_upgrade_text
+        elif option1 == "damage":
+            txt1 = self.dam_upgrade_text
+        elif option1 == "regen":
+            txt1 = self.reg_upgrade_text
+        elif option1 == "movement":
+            txt1 = self.mov_upgrade_text
+        elif option1 == "slow":
+            txt1 = self.slo_upgrade_text
+        if option2 == "fireRate":
+            txt2 = self.fir_upgrade_text
+        elif option2 == "velocity":
+            txt2 = self.vel_upgrade_text
+        elif option2 == "damage":
+            txt2 = self.dam_upgrade_text
+        elif option2 == "regen":
+            txt2 = self.reg_upgrade_text
+        elif option2 == "movement":
+            txt2 = self.mov_upgrade_text
+        elif option2 == "slow":
+            txt2 = self.slo_upgrade_text
+        if option3 == "fireRate":
+            txt3 = self.fir_upgrade_text
+        elif option3 == "velocity":
+            txt3 = self.vel_upgrade_text
+        elif option3 == "damage":
+            txt3 = self.dam_upgrade_text
+        elif option3 == "regen":
+            txt3 = self.reg_upgrade_text
+        elif option3 == "movement":
+            txt3 = self.mov_upgrade_text
+        elif option3 == "slow":
+            txt3 = self.slo_upgrade_text
+
+        
+        while upgrading:
+            pygame.draw.rect(screen, pygame.color.Color("White"), (50, 200, 200, 300), 4)
+            pygame.draw.rect(screen, pygame.color.Color("White"), (300, 200, 200, 300), 4)
+            pygame.draw.rect(screen, pygame.color.Color("White"), (550, 200, 200, 300), 4)
+            screen.blit(txt1, (70, 400))
+            screen.blit(txt2, (320, 400))
+            screen.blit(txt3, (570, 400))
+
+
 
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, player, health):
