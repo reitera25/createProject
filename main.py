@@ -6,7 +6,12 @@ playerImg = pygame.image.load("char1.png")
 player_y = 0
 player_x = 0
 
+RUNNING, PAUSE = 0, 1
+
+state = RUNNING
+
 all_enemies = pygame.sprite.Group()
+
 
 def time_convert(sec):
     min = sec // 60
@@ -26,6 +31,9 @@ class Game:
         done = False
         self.cool_down_count = 0
         self.spawn_cooldown_count = 0
+
+        pause_text = pygame.font.SysFont("Arial", 75).render("Pause", True, pygame.color.Color("White"))
+
 
         global player
 
@@ -55,7 +63,7 @@ class Game:
             if int(seconds) % 30 == 0:
                 self.s_cooldown = 420 / ((seconds // 30) + 1)
 
-            self.spawn_cooldown(self.s_cooldown)
+            self.cooldown(self.s_cooldown, 1)
 
             pressed = pygame.key.get_pressed()
             left, middle, right = pygame.mouse.get_pressed()
@@ -68,8 +76,9 @@ class Game:
                 player.y -= 2 if player.y > 20 else 0
             if pressed[pygame.K_d]:
                 player.x += 2 if player.x < width - 20 else 0
+            
             if left:
-                self.cooldown()
+                self.cooldown(10, 0)
                 if self.cool_down_count == 0:
                     mouse_x, mouse_y = pygame.mouse.get_pos()
 
@@ -88,7 +97,15 @@ class Game:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     done = True
-            
+
+            if pressed[pygame.K_ESCAPE]:
+                state = PAUSE
+            if not pressed[pygame.K_ESCAPE]:
+                state = RUNNING
+
+            if state == PAUSE:
+                screen.blit(pause_text, (400, 400))
+
             pygame.display.flip()
             self.clock.tick(60)
             screen.fill((0, 0, 0))
@@ -120,25 +137,24 @@ class Game:
         pygame.font.init()
         font = pygame.font.SysFont('Arial', 50)
         textsurface = font.render(text, False, (255, 255, 255))
-        screen.blit(textsurface, (110, 160))
-
-    def cooldown(self):
-        if self.cool_down_count >= 10:
-            self.cool_down_count = 0
-        elif self.cool_down_count > 0:
-            self.cool_down_count += 1
+        screen.blit(textsurface, (110, 160))        
     
-    def spawn_cooldown(self, cooldown):
-        if self.spawn_cooldown_count >= cooldown:
-            self.spawn_cooldown_count = 0
-            for i in range(4):
-                n = Enemy(player, self.difficulty)
-                all_enemies.add(n)
-                Enemy.add(n)
+    def cooldown(self, cooldown, type):
+        if type == 1:
+            if self.spawn_cooldown_count >= cooldown:
+                self.spawn_cooldown_count = 0
+                for i in range(4):
+                    n = Enemy(player, self.difficulty)
+                    all_enemies.add(n)
+                    Enemy.add(n)
 
-        elif self.spawn_cooldown_count >= 0:
-            self.spawn_cooldown_count += 1
-
+            elif self.spawn_cooldown_count >= 0:
+                self.spawn_cooldown_count += 1
+        elif type == 0:
+            if self.cool_down_count >= 10:
+                self.cool_down_count = 0
+            elif self.cool_down_count > 0:
+                self.cool_down_count += 1
 
 
 class Enemy(pygame.sprite.Sprite):
