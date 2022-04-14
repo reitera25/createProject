@@ -1,5 +1,9 @@
-import pygame, sys, math, random, time
-    
+from audioop import mul
+from datetime import datetime
+from email.mime import base
+import pygame, sys, math, random, time, tkinter, multiprocessing
+from time import sleep
+
 start_time = time.time()
 screen = pygame.display.set_mode((800, 800))
 playerImg = pygame.image.load("char1.png")
@@ -33,25 +37,27 @@ class Game:
     enemies = []
     rockets = []
     lost = False
+    base_health = 15
+    done = False
 
     def __init__(self, width, height):
+
         pygame.init()
+        pygame.event.pump()
         self.width = width
         self.height = height
         self.clock = pygame.time.Clock()
-        done = False
+        
         self.cool_down_count = 0
         self.spawn_cooldown_count = 0
-        self.health = 10
+        self.upgrades = 0
 
-        pygame.time.set_timer(2, 60000)
-
-        self.fir_upgrade_text = pygame.font.SysFont("Arial", 20).render("Decreases weapon cooldown by 10%", True, pygame.color.Color("White"))
-        self.vel_upgrade_text = pygame.font.SysFont("Arial", 20).render("Increases rocket velocity by 10%", True, pygame.color.Color("White"))
-        self.dam_upgrade_text = pygame.font.SysFont("Arial", 20).render("Increases damage by 1", True, pygame.color.Color("White"))
-        self.mov_upgrade_text = pygame.font.SysFont("Arial", 20).render("Increases movement speed by 10%", True, pygame.color.Color("White"))
-        self.reg_upgrade_text = pygame.font.SysFont("Arial", 20).render("Health increases by +1 every minute", True, pygame.color.Color("White"))
-        self.slo_upgrade_text = pygame.font.SysFont("Arial", 20).render("Decreases enemy speed by 10%", True, pygame.color.Color("White"))
+        self.fir_upgrade_text = pygame.font.SysFont("Arial", 25).render("Decreases weapon cooldown by 10%", True, pygame.color.Color("White"))
+        self.vel_upgrade_text = pygame.font.SysFont("Arial", 25).render("Increases rocket velocity by 10%", True, pygame.color.Color("White"))
+        self.dam_upgrade_text = pygame.font.SysFont("Arial", 25).render("Increases damage by 1", True, pygame.color.Color("White"))
+        self.mov_upgrade_text = pygame.font.SysFont("Arial", 25).render("Increases movement speed by 1.", True, pygame.color.Color("White"))
+        self.reg_upgrade_text = pygame.font.SysFont("Arial", 25).render("Health increases by +1 every minute", True, pygame.color.Color("White"))
+        self.slo_upgrade_text = pygame.font.SysFont("Arial", 25).render("Decreases enemy speed by 10%", True, pygame.color.Color("White"))
 
         fireRate_text = pygame.font.SysFont("Arial", 20).render("Fire Rate: " + str(playerUpgrades["fireRate"]), True, pygame.color.Color("White"))
         velocity_text = pygame.font.SysFont("Arial", 20).render("Velocity: " + str(playerUpgrades["velocity"]), True, pygame.color.Color("White"))
@@ -61,17 +67,17 @@ class Game:
         slow_text = pygame.font.SysFont("Arial", 20).render("Enemy Slow: " + str(playerUpgrades["slow"]), True, pygame.color.Color("White"))
 
 
+
         global player
 
         player = Player(self, width/2, height/2)
-        #generator = Generator(self)
         rocket = None
         angle = 0
 
         self.s_cooldown = 420
 
 
-        while not done:         
+        while not Game.done:         
         
             curr_time = time.time()
 
@@ -85,10 +91,14 @@ class Game:
 
             self.difficulty = minutes + 1
 
-
             if int(seconds) % 30 == 0:
                 self.s_cooldown = 420 / ((seconds // 30) + 1)
+            if int(seconds) % 15 == 0 and not int(seconds) == 0:
+                Game.base_health += playerUpgrades["regen"]
+                self.upgrade()
             
+            health_text = pygame.font.SysFont("Arial", 50).render("Health: " + str(Game.base_health), True, pygame.color.Color("White"))
+            screen.blit(health_text, (600, 160))
 
 
             self.cooldown(self.s_cooldown, 1)
@@ -97,13 +107,13 @@ class Game:
             left, middle, right = pygame.mouse.get_pressed()
 
             if pressed[pygame.K_a]:
-                player.x -= 2 if player.x > 20 else 0
+                player.x -= (2 + playerUpgrades["movement"]) if player.x > 20 else 0
             if pressed[pygame.K_s]:
-                player.y += 2 if player.y < height - 20 else 0
+                player.y += (2 + playerUpgrades["movement"]) if player.y < height - 20 else 0
             if pressed[pygame.K_w]:
-                player.y -= 2 if player.y > 20 else 0
+                player.y -= (2 + playerUpgrades["movement"]) if player.y > 20 else 0
             if pressed[pygame.K_d]:
-                player.x += 2 if player.x < width - 20 else 0
+                player.x += (2 + playerUpgrades["movement"]) if player.x < width - 20 else 0
             
             if left:
                 self.cooldown(15 - (1.5 * playerUpgrades["fireRate"]), 0)
@@ -116,17 +126,15 @@ class Game:
 
                     angle = math.atan2(distance_y, distance_x)
 
-                    speed_x = 4 * math.cos(angle)
-                    speed_y = 4 * math.sin(angle)
+                    speed_x = (4 * math.cos(angle)) + (4 * math.cos(angle) * (0.1 * playerUpgrades["velocity"]))
+                    speed_y = (4 * math.sin(angle)) + (4 * math.sin(angle) * (0.1 * playerUpgrades["velocity"]))
 
                     self.rockets.append([player.x, player.y, speed_x, speed_y])
                     self.cool_down_count = 1
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    done = True
-                if event.type == UPGRADE:
-                    self.upgrade()
+                    Game.done = True                    
 
             if pressed[pygame.K_ESCAPE]:
                 state = PAUSE
@@ -192,7 +200,11 @@ class Game:
                 self.cool_down_count += 1
 
     def upgrade(self):
+                
+        startTime = time.time()
+        seconds = 0
         upgrading = True
+        self.upgrades += 1
         option1 = upgrade_list[random.randrange(6)]
         option2 = upgrade_list[random.randrange(6)]
         option3 = upgrade_list[random.randrange(6)]
@@ -233,16 +245,31 @@ class Game:
             txt3 = self.mov_upgrade_text
         elif option3 == "slow":
             txt3 = self.slo_upgrade_text
-
-        
+        mouseX=0
+        mouseY =0
         while upgrading:
-            pygame.draw.rect(screen, pygame.color.Color("White"), (50, 200, 200, 300), 4)
-            pygame.draw.rect(screen, pygame.color.Color("White"), (300, 200, 200, 300), 4)
-            pygame.draw.rect(screen, pygame.color.Color("White"), (550, 200, 200, 300), 4)
-            screen.blit(txt1, (70, 400))
-            screen.blit(txt2, (320, 400))
-            screen.blit(txt3, (570, 400))
+            self.clock.tick(60)
 
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    upgrading = False
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    mouseX, mouseY = pygame.mouse.get_pos()                
+                
+            screen.blit(txt1, (70, 250))
+            screen.blit(txt2, (70, 350))
+            screen.blit(txt3, (70, 450))
+            pygame.display.update()
+
+            if mouseX >= 70 and mouseY >= 225 and mouseX <= 250 and mouseY <= 275:
+                playerUpgrades[option1] += 1
+                upgrading = False
+            elif mouseX >= 70 and mouseY >= 325 and mouseX <= 250 and mouseY <= 375:
+                playerUpgrades[option2] += 1
+                upgrading = False
+            elif mouseX >= 70 and mouseY >= 425 and mouseX <= 250 and mouseY <= 475:
+                playerUpgrades[option3] += 1
+                upgrading = False
 
 
 class Enemy(pygame.sprite.Sprite):
@@ -262,21 +289,29 @@ class Enemy(pygame.sprite.Sprite):
             self.rect.x = random.randrange(800 - self.rect.width)
             self.rect.y = random.randrange(-100, -40)
             self.speed_x = 0
-            self.speed_y = random.randrange(1, 6)
+            self.speed_y = random.randrange(1, (6 - playerUpgrades["slow"]))
+            if self.speed_y < 1:
+                self.speed_y = 1
         if self.direction == 1:
             self.rect.x = random.randrange(800 - self.rect.width)
             self.rect.y = random.randrange(800, 800 + 60)
             self.speed_x = 0
-            self.speed_y = random.randrange(1, 6)
+            self.speed_y = random.randrange(1, (6 - playerUpgrades["slow"]))
+            if self.speed_y < 1:
+                self.speed_y = 1
         if self.direction == 2:
             self.rect.x = random.randrange(-100, -40)
             self.rect.y = random.randrange(800 - self.rect.height)
-            self.speed_x = random.randrange(1, 6)
+            self.speed_x = random.randrange(1, (6 - playerUpgrades["slow"]))
+            if self.speed_x < 1:
+                self.speed_x = 1
             self.speed_y = 0
         if self.direction == 3:
             self.rect.x = random.randrange(800, 800+60)
             self.rect.y = random.randrange(800 - self.rect.height)
-            self.speed_x = random.randrange(1, 6)
+            self.speed_x = random.randrange(1, (6 - playerUpgrades["slow"]))
+            if self.speed_x < 1:
+                self.speed_x = 1
             self.speed_y = 0
 
     def update(self):
@@ -288,16 +323,22 @@ class Enemy(pygame.sprite.Sprite):
 
         if self.direction == 0:
             if self.rect.top > 800 + 10:
+                Game.base_health -= 1
                 self.spawn()
         elif self.direction == 1:
             if self.rect.bottom < -10:
+                Game.base_health -= 1
                 self.spawn()
         elif self.direction == 2:
             if self.rect.left > 800 + 10:
+                Game.base_health -= 1
                 self.spawn()
         elif self.direction == 3:
             if self.rect.right < -10:
+                Game.base_health -= 1
                 self.spawn()
+
+
 
     def checkCollision(self):
         for rocket in Game.rockets:
@@ -305,7 +346,7 @@ class Enemy(pygame.sprite.Sprite):
                     rocket[0] > self.rect.x - 30 and
                     rocket[1] < self.rect.y + 30 and
                     rocket[1] > self.rect.y - 30):
-                self.health -= 1
+                self.health -= (1 + playerUpgrades["damage"])
                 if self.health <= 0:
                     all_enemies.remove(self)
 
@@ -335,9 +376,6 @@ class Player:
         pos = (screen.get_width()/2, screen.get_height()/2)
         self.hitbox = (self.x, self.y, 90, 90)
 
-
-        #if pygame.mouse.get_pressed():
-            #print(pygame.mouse.get_pos())
         rotated_image, rotated_image_rect = self.rotate(playerImg, pos, (30, 50), angle)
         offset_rot = self.offset.rotate(angle)
         pygame.Surface.blit(screen, rotated_image, (self.x, self.y))
@@ -360,17 +398,6 @@ class Player:
         rotated_image_rect = rotated_image.get_rect(center = rotated_image_center)
 
         return rotated_image, rotated_image_rect
-
-
-
-class Generator:
-    def __init__(self, game):
-        margin = 30
-        width = 50
-        for x in range(margin, game.width - margin, width):
-            for y in range(margin, int(game.height / 2), width):
-                game.enemies.append(Enemy(game, x, y))
-
 
 if __name__ == '__main__':
     game = Game(800, 800)
