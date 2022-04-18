@@ -1,8 +1,26 @@
-from audioop import mul
 from datetime import datetime
-from email.mime import base
 import pygame, sys, math, random, time, tkinter, multiprocessing
 from time import sleep
+
+instruction_text1 = "Welcome to my Create Project!"
+instruction_text2 = "Your goal is to protect your home from the purple cubes."
+instruction_text3 = "Press W to move your ship up."
+instruction_text4 = "Press A to move left."
+instruction_text5 = "Press S to move down."
+instruction_text6 = "Press D to move right."
+instruction_text7 = "Rotate your ship by moving your mouse."
+instruction_text8 = "Shoot rockets by pressing your left mouse button."
+instruction_text9 = "Shoot the purple cubes to destroy them."
+instruction_text10 = "The game will get harder over time."
+instruction_text11 = "But, you get upgrades every minute."
+instruction_text12 = "Click the upgrade text when it appears to get the upgrade."
+
+instructions = [instruction_text1, instruction_text2, instruction_text3, instruction_text4, instruction_text5, instruction_text6, instruction_text7, instruction_text8, instruction_text9, instruction_text10, instruction_text11, instruction_text12]
+
+for instruction in instructions:
+    print(instruction)
+
+sleep(30)
 
 start_time = time.time()
 screen = pygame.display.set_mode((800, 800))
@@ -39,6 +57,7 @@ class Game:
     lost = False
     base_health = 15
     done = False
+    instructed = False
 
     def __init__(self, width, height):
 
@@ -67,7 +86,6 @@ class Game:
         slow_text = pygame.font.SysFont("Arial", 20).render("Enemy Slow: " + str(playerUpgrades["slow"]), True, pygame.color.Color("White"))
 
 
-
         global player
 
         player = Player(self, width/2, height/2)
@@ -77,13 +95,13 @@ class Game:
         self.s_cooldown = 420
 
 
-        while not Game.done:         
+
+
+        while not Game.done:
         
             curr_time = time.time()
 
             time_lapsed = curr_time - start_time
-
-        
 
             seconds, minutes = time_convert(time_lapsed)
 
@@ -93,7 +111,7 @@ class Game:
 
             if int(seconds) % 30 == 0:
                 self.s_cooldown = 420 / ((seconds // 30) + 1)
-            if int(seconds) % 15 == 0 and not int(seconds) == 0:
+            if int(seconds) % 60 == 0 and not int(seconds) == 0:
                 Game.base_health += playerUpgrades["regen"]
                 self.upgrade()
             
@@ -180,7 +198,7 @@ class Game:
         pygame.font.init()
         font = pygame.font.SysFont('Arial', 50)
         textsurface = font.render(text, False, (255, 255, 255))
-        screen.blit(textsurface, (110, 160))        
+        screen.blit(textsurface, (110, 160))
     
     def cooldown(self, cooldown, type):
         if type == 1:
@@ -200,9 +218,6 @@ class Game:
                 self.cool_down_count += 1
 
     def upgrade(self):
-                
-        startTime = time.time()
-        seconds = 0
         upgrading = True
         self.upgrades += 1
         option1 = upgrade_list[random.randrange(6)]
