@@ -184,6 +184,8 @@ class Game:
             for rocket in self.rockets:
                 rocket[0] += rocket[2]
                 rocket[1] += rocket[3]
+                if rocket[0] > 800 or rocket[0] < 0 or rocket[1] > 800 or rocket[1] < 0:
+                    Game.rockets.remove(rocket)
 
                 
 
@@ -397,7 +399,6 @@ class Player:
         rotated_image, rotated_image_rect = self.rotate(playerImg, pos, (30, 50), angle)
         offset_rot = self.offset.rotate(angle)
         pygame.Surface.blit(screen, rotated_image, (self.x, self.y))
-        pygame.draw.rect(screen, (255, 0, 0), (self.x, self.y, 100, 100), 1)
 
         return self.x, self.y
 
