@@ -20,7 +20,7 @@ instructions = [instruction_text1, instruction_text2, instruction_text3, instruc
 for instruction in instructions:
     print(instruction)
 
-sleep(30)
+sleep(15)
 
 start_time = time.time()
 screen = pygame.display.set_mode((800, 800))
@@ -98,6 +98,9 @@ class Game:
 
 
         while not Game.done:
+
+            if Game.base_health <= 0:
+                Game.done = True
         
             curr_time = time.time()
 
@@ -204,7 +207,7 @@ class Game:
         if type == 1:
             if self.spawn_cooldown_count >= cooldown:
                 self.spawn_cooldown_count = 0
-                for i in range(4):
+                for i in range(2):
                     n = Enemy(player, self.difficulty)
                     all_enemies.add(n)
                     Enemy.add(n)
